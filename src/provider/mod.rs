@@ -2,14 +2,50 @@ use crate::prelude::*;
 
 use serde::Deserialize;
 use std::collections::HashMap;
+use std::fmt::{self, Display};
 use std::future::Future;
 use std::pin::Pin;
 
 // Identifier type can be either a String or a u64 (number in Rust).
 #[derive(Debug, Deserialize)]
+#[serde(untagged)] // Allow deserialization of both strings and numbers
 pub enum Identifier {
     Str(String),
-    Num(u64),
+    Num(usize),
+}
+
+// Implement `Display` for `Identifier`
+impl Display for Identifier {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Identifier::Str(s) => write!(f, "{}", s),
+            Identifier::Num(n) => write!(f, "{}", n),
+        }
+    }
+}
+
+// Implement `From<String>` for `Identifier`
+impl From<String> for Identifier {
+    fn from(value: String) -> Self {
+        Identifier::Str(value)
+    }
+}
+
+// Implement `From<u64>` for `Identifier`
+impl From<usize> for Identifier {
+    fn from(value: usize) -> Self {
+        Identifier::Num(value)
+    }
+}
+
+// Implement `From<Identifier>` for `String`
+impl From<Identifier> for String {
+    fn from(identifier: Identifier) -> Self {
+        match identifier {
+            Identifier::Str(s) => s,
+            Identifier::Num(n) => n.to_string(),
+        }
+    }
 }
 
 // RaRecord struct with generic IdentifierType
@@ -49,12 +85,13 @@ pub type FilterPayload = HashMap<String, serde_json::Value>;
 // Meta as a HashMap
 pub type Meta = HashMap<String, serde_json::Value>;
 
+#[derive(Clone)]
 pub struct Resource {
     pub resource: String,
 }
 
 impl Resource {
-    fn new(res: &str) -> Self {
+    pub fn new(res: &str) -> Self {
         Self {
             resource: res
                 .trim()
@@ -77,55 +114,55 @@ pub trait DataProvider {
         &self,
         resource: Resource,
         params: GetListParams,
-    ) -> Pin<Box<dyn Future<Output = Result<GetListResult>> + '_  >>;
+    ) -> Pin<Box<dyn Future<Output = Result<GetListResult>> + '_>>;
 
     fn get_one(
         &self,
         resource: Resource,
         params: GetOneParams,
-    ) -> Pin<Box<dyn Future<Output = Result<GetOneResult>>>>;
+    ) -> Pin<Box<dyn Future<Output = Result<GetOneResult>> + '_>>;
 
     fn get_many(
         &self,
         resource: Resource,
         params: GetManyParams,
-    ) -> Pin<Box<dyn Future<Output = Result<GetManyResult>>>>;
+    ) -> Pin<Box<dyn Future<Output = Result<GetManyResult>> + '_>>;
 
     fn get_many_reference(
         &self,
         resource: Resource,
         params: GetManyReferenceParams,
-    ) -> Pin<Box<dyn Future<Output = Result<GetManyReferenceResult>>>>;
+    ) -> Pin<Box<dyn Future<Output = Result<GetManyReferenceResult>> + '_>>;
 
     fn update(
         &self,
         resource: Resource,
         params: UpdateParams,
-    ) -> Pin<Box<dyn Future<Output = Result<UpdateResult>>>>;
+    ) -> Pin<Box<dyn Future<Output = Result<UpdateResult>> + '_>>;
 
     fn update_many(
         &self,
         resource: Resource,
         params: UpdateManyParams,
-    ) -> Pin<Box<dyn Future<Output = Result<UpdateManyResult>>>>;
+    ) -> Pin<Box<dyn Future<Output = Result<UpdateManyResult>> + '_>>;
 
     fn create(
         &self,
         resource: Resource,
         params: CreateParams,
-    ) -> Pin<Box<dyn Future<Output = Result<CreateResult>>>>;
+    ) -> Pin<Box<dyn Future<Output = Result<CreateResult>> + '_>>;
 
     fn delete(
         &self,
         resource: Resource,
         params: DeleteParams,
-    ) -> Pin<Box<dyn Future<Output = Result<DeleteResult>>>>;
+    ) -> Pin<Box<dyn Future<Output = Result<DeleteResult>> + '_>>;
 
     fn delete_many(
         &self,
         resource: Resource,
         params: DeleteManyParams,
-    ) -> Pin<Box<dyn Future<Output = Result<DeleteManyResult>>>>;
+    ) -> Pin<Box<dyn Future<Output = Result<DeleteManyResult>> + '_>>;
 }
 
 // GetListParams struct
