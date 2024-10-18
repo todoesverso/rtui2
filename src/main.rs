@@ -3,6 +3,7 @@
 use crate::prelude::*;
 use serde_json::json;
 use std::collections::HashMap;
+use std::hash::Hash;
 
 mod error;
 mod prelude;
@@ -167,6 +168,38 @@ async fn main() {
         Ok(result) => {
             for record in result.data {
                 println!("Record ID: {}", record);
+            }
+        }
+        Err(e) => println!("Error fetching list: {:?}", e),
+    }
+
+    println!("###### Delete ######");
+    let previous_data = Record {
+        id: Identifier::Num(1),
+        fields: HashMap::new(),
+    };
+
+    let params = DeleteParams {
+        id: Identifier::Num(1),
+        previous_data: Some(previous_data),
+        meta: None,
+    };
+    match api.delete(resource.clone(), params).await {
+        Ok(result) => {
+            println!("Record ID: {}", result.data.id);
+        }
+        Err(e) => println!("Error fetching list: {:?}", e),
+    }
+
+    println!("###### Delete Many ######");
+    let params = DeleteManyParams {
+        ids: vec![Identifier::Num(1), Identifier::Num(2)],
+        meta: None,
+    };
+    match api.delete_many(resource.clone(), params).await {
+        Ok(result) => {
+            for id in result.data {
+                println!("Record ID: {:?}", id);
             }
         }
         Err(e) => println!("Error fetching list: {:?}", e),

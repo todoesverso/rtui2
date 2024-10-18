@@ -135,9 +135,6 @@ impl JsonPlaceholder {
 
         let response = client.delete(url).send().await?;
         self.check_status(&response)?;
-        let body = response.text().await?;
-        //dbg!("Raw response body: {}", &body);
-        let records: Record = serde_json::from_str(&body)?;
         match data {
             Some(record) => Ok(DeleteResult { data: record }),
             None => Err(Error::Unknown("DetelteParams wrong".to_string())),
@@ -150,7 +147,7 @@ impl JsonPlaceholder {
         let mut deleted_ids = Vec::new();
         for id in ids {
             let url_with_id = format!("{}{}{}", url, "/", id);
-            let response = client.put(url).send().await?;
+            let response = client.delete(url_with_id).send().await?;
             if self.check_status(&response).is_ok() {
                 deleted_ids.push(id);
             }
