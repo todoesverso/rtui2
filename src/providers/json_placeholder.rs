@@ -27,12 +27,23 @@ impl JsonPlaceholder {
         Ok(())
     }
 
+    fn build_filter_query_params(&self, filters: &FilterPayload) -> String {
+        filters
+            .iter()
+            .map(|(k, v)| format!("{}={}", k, urlencoding::encode(&v.to_string())))
+            .collect::<Vec<_>>()
+            .join("&")
+    }
+
+    fn update_url_with_filters(&self, url: &str, filters: &FilterPayload) -> String {
+        let filters = self.build_filter_query_params(filters);
+        format!("{}?{}", url, filters)
+    }
+
     async fn my_get_list(&self, url: &str) -> Result<GetListResult> {
         let response = reqwest::get(url).await?;
         self.check_status(&response)?;
         let body = response.text().await?;
-        println!("Raw response body: {}", body);
-
         let records: Vec<Record> = serde_json::from_str(&body).unwrap();
         let total: usize = records.len() as usize;
         Ok(GetListResult {
@@ -47,8 +58,6 @@ impl JsonPlaceholder {
         let response = reqwest::get(url).await?;
         self.check_status(&response)?;
         let body = response.text().await?;
-        //dbg!("Raw response body: {}", &body);
-
         let records: Record = serde_json::from_str(&body)?;
         Ok(GetOneResult { data: records })
     }
@@ -57,8 +66,6 @@ impl JsonPlaceholder {
         let response = reqwest::get(url).await?;
         self.check_status(&response)?;
         let body = response.text().await?;
-        //dbg!("Raw response body: {}", &body);
-
         let records: Vec<Record> = serde_json::from_str(&body)?;
         Ok(GetManyResult { data: records })
     }
@@ -67,8 +74,6 @@ impl JsonPlaceholder {
         let response = reqwest::get(url).await?;
         self.check_status(&response)?;
         let body = response.text().await?;
-        //dbg!("Raw response body: {}", &body);
-
         let records: Vec<Record> = serde_json::from_str(&body)?;
         let total: usize = records.len() as usize;
 
@@ -90,7 +95,6 @@ impl JsonPlaceholder {
         let response = client.post(url).json(&data).send().await?;
         self.check_status(&response)?;
         let body = response.text().await?;
-        //dbg!("Raw response body: {}", &body);
         let records: Record = serde_json::from_str(&body)?;
         Ok(CreateResult { data: records })
     }
@@ -105,7 +109,6 @@ impl JsonPlaceholder {
         let response = client.put(url).json(&data).send().await?;
         self.check_status(&response)?;
         let body = response.text().await?;
-        //dbg!("Raw response body: {}", &body);
         let records: Record = serde_json::from_str(&body)?;
         Ok(UpdateResult { data: records })
     }
@@ -165,7 +168,10 @@ impl DataProvider for JsonPlaceholder {
     ) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<GetListResult>> + '_>> {
         Box::pin(async move {
             let res = resource.resource;
-            let url = self.url.join(&res)?.to_string();
+            let mut url = self.url.join(&res)?.to_string();
+            if params.filter.is_some() {
+                url = self.update_url_with_filters(&url, &params.filter.unwrap());
+            }
             self.my_get_list(&url).await
         })
     }
@@ -211,7 +217,9 @@ impl DataProvider for JsonPlaceholder {
             let id_path = format!("{}{}", &params.id.to_string(), "/");
             let url = self.url.join(&resource_path)?;
             let url_with_id = url.join(&id_path)?;
-            let url_with_id_and_target = url_with_id.join(&params.target)?.to_string();
+            let mut url_with_id_and_target = url_with_id.join(&params.target)?.to_string();
+            url_with_id_and_target =
+                self.update_url_with_filters(&url_with_id_and_target, &params.filter);
             self.my_get_many_reference(&url_with_id_and_target).await
         })
     }

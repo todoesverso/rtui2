@@ -19,10 +19,12 @@ async fn main() {
     let resource = Resource::new("posts");
     let api = JsonPlaceholder::new(url).unwrap();
 
+    let mut filter: FilterPayload = HashMap::new();
+    filter.insert("title".to_string(), "qui est esse".to_string());
     let params = GetListParams {
         pagination: None,
         sort: None,
-        filter: None,
+        filter: Some(filter),
         meta: None,
     };
 

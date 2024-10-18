@@ -80,7 +80,7 @@ pub enum SortOrder {
 }
 
 // FilterPayload as a HashMap
-pub type FilterPayload = HashMap<String, serde_json::Value>;
+pub type FilterPayload = HashMap<String, String>;
 
 // Meta as a HashMap
 pub type Meta = HashMap<String, serde_json::Value>;
