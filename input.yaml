@@ -1,0 +1,13 @@
+name: test
+url: http://jsonplaceholder.typicode.com/
+resources:
+  - name: endpoint 1
+    resource: /ep1
+    fields:
+      - name: field_1_name
+      - name: field_2_name
+  - name: endpoint 2
+    resource: /ep2
+    fields:
+      - name: field_1_name
+      - name: field_2_name

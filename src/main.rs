@@ -5,19 +5,25 @@ use serde_json::json;
 use std::collections::HashMap;
 use std::hash::Hash;
 
+mod config;
 mod error;
 mod prelude;
 mod provider;
 mod providers;
 mod utils;
 
+use crate::config::Config;
 use crate::provider::*;
 use crate::providers::JsonPlaceholder;
+
 #[tokio::main]
-async fn main() {
-    let url = "http://jsonplaceholder.typicode.com/";
+async fn main() -> Result<()> {
+    let c = Config::from_cli()?;
+    dbg!(&c);
+
+    let url = c.url;
     let resource = Resource::new("posts");
-    let api = JsonPlaceholder::new(url).unwrap();
+    let api = JsonPlaceholder::new(&url).unwrap();
 
     let mut filter: FilterPayload = HashMap::new();
     filter.insert("title".to_string(), "qui est esse".to_string());
@@ -206,4 +212,6 @@ async fn main() {
         }
         Err(e) => println!("Error fetching list: {:?}", e),
     }
+
+    Ok(())
 }
